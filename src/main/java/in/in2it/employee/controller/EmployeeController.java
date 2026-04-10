@@ -1,12 +1,15 @@
 package in.in2it.employee.controller;
 
 import in.in2it.employee.dto.EmployeeDTO;
+import in.in2it.employee.exception.MissingParameterException;
 import in.in2it.employee.service.EmployeeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/employees")
@@ -46,5 +49,24 @@ public class EmployeeController {
     public ResponseEntity<String> deleteEmployee(@PathVariable Long id){
         employeeService.deleteEmployee(id);
         return new ResponseEntity<>("Employee deleted successfully",HttpStatus.OK);
+    }
+
+    @GetMapping("/get-by-emp-code-and-company-name")
+    public ResponseEntity<EmployeeDTO> getEmployeeByEmpCodeAndCompanyName(@RequestParam(required = false) String empCode,
+                                                                          @RequestParam(required = false) String companyName){
+        List<String> missingParameters = new ArrayList<>();
+        if(empCode == null || empCode.trim().isEmpty()){
+            missingParameters.add("empCode");
+        }
+        if(companyName == null || companyName.trim().isEmpty()){
+            missingParameters.add("companyName");
+        }
+        if(!missingParameters.isEmpty()){
+            String finalMessage = missingParameters.stream().collect(Collectors.joining(","));
+            throw new MissingParameterException("Please Provide : "+finalMessage);
+        }
+
+        EmployeeDTO response = employeeService.getEmployeeByEmpCodeAndCompanyName(empCode,companyName);
+        return new ResponseEntity<>(response,HttpStatus.OK);
     }
 }
